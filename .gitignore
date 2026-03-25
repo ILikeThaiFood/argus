@@ -205,3 +205,37 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# ML Models (large files)
+ml/models/*.pt
+ml/models/*.pkl
+ml/models/*.joblib
+*.h5
+
+# Datasets (download separately)
+data/raw/
+data/processed/
+*.csv
+*.pcap
+
+# Node
+node_modules/
+.next/
+out/
+
+# Docker
+docker-compose.override.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
