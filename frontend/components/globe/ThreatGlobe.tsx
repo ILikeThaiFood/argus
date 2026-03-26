@@ -1,40 +1,31 @@
 "use client";
 
-import { useRef, useMemo, useEffect, useState } from "react";
+import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Stars } from "@react-three/drei";
 import * as THREE from "three";
+import type { ThreatOrigin } from "@/lib/types";
 
-interface ThreatOrigin {
-  lat: number;
-  lng: number;
-  count: number;
-  country: string;
-  severity: "critical" | "high" | "medium";
+interface ThreatGlobeProps {
+  origins: ThreatOrigin[];
 }
 
-const THREAT_DATA: ThreatOrigin[] = [
-  { lat: 39.9042, lng: 116.4074, count: 342, country: "China", severity: "critical" },
-  { lat: 55.7558, lng: 37.6173, count: 276, country: "Russia", severity: "critical" },
-  { lat: 35.6892, lng: 51.389, count: 128, country: "Iran", severity: "high" },
-  { lat: 39.0392, lng: 125.7625, count: 95, country: "N. Korea", severity: "high" },
-  { lat: -15.7975, lng: -47.8919, count: 67, country: "Brazil", severity: "medium" },
-  { lat: 9.0579, lng: 7.4951, count: 54, country: "Nigeria", severity: "medium" },
-  { lat: 21.0278, lng: 105.8342, count: 41, country: "Vietnam", severity: "medium" },
-  { lat: 28.6139, lng: 77.209, count: 38, country: "India", severity: "medium" },
-  { lat: 44.4268, lng: 26.1025, count: 29, country: "Romania", severity: "medium" },
-];
+const TARGET = { lat: 38.9072, lon: -77.0369 }; // Washington DC
 
-const TARGET = { lat: 38.9072, lng: -77.0369 }; // Washington DC
-
-function latLngToVec3(lat: number, lng: number, radius: number): THREE.Vector3 {
+function latLngToVec3(lat: number, lon: number, radius: number): THREE.Vector3 {
   const phi = (90 - lat) * (Math.PI / 180);
-  const theta = (lng + 180) * (Math.PI / 180);
+  const theta = (lon + 180) * (Math.PI / 180);
   return new THREE.Vector3(
     -radius * Math.sin(phi) * Math.cos(theta),
     radius * Math.cos(phi),
     radius * Math.sin(phi) * Math.sin(theta)
   );
+}
+
+function severityFromCount(count: number): "critical" | "high" | "medium" {
+  if (count >= 200) return "critical";
+  if (count >= 80) return "high";
+  return "medium";
 }
 
 function GlobeWireframe() {
@@ -54,7 +45,7 @@ function GlobeWireframe() {
   );
 }
 
-function ThreatPoints() {
+function ThreatPoints({ origins }: { origins: ThreatOrigin[] }) {
   const ref = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.y += delta * 0.05;
@@ -62,10 +53,11 @@ function ThreatPoints() {
 
   return (
     <group ref={ref}>
-      {THREAT_DATA.map((t, i) => {
-        const pos = latLngToVec3(t.lat, t.lng, 2.05);
-        const color = t.severity === "critical" ? "#ff2d55" : t.severity === "high" ? "#ff6b35" : "#00ffd5";
-        const size = 0.02 + (t.count / 400) * 0.04;
+      {origins.map((t, i) => {
+        const pos = latLngToVec3(t.lat, t.lon, 2.05);
+        const sev = severityFromCount(t.count);
+        const color = sev === "critical" ? "#ff2d55" : sev === "high" ? "#ff6b35" : "#00ffd5";
+        const size = 0.02 + (Math.min(t.count, 400) / 400) * 0.04;
         return (
           <mesh key={i} position={pos}>
             <sphereGeometry args={[size, 8, 8]} />
@@ -78,28 +70,27 @@ function ThreatPoints() {
   );
 }
 
-function AttackArcs() {
+function AttackArcs({ origins }: { origins: ThreatOrigin[] }) {
   const groupRef = useRef<THREE.Group>(null);
-  const [phase, setPhase] = useState(0);
 
   useFrame((_, delta) => {
     if (groupRef.current) groupRef.current.rotation.y += delta * 0.05;
-    setPhase((p) => (p + delta * 0.5) % 1);
   });
 
   const arcs = useMemo(() => {
-    const targetPos = latLngToVec3(TARGET.lat, TARGET.lng, 2.05);
-    return THREAT_DATA.map((t) => {
-      const srcPos = latLngToVec3(t.lat, t.lng, 2.05);
+    const targetPos = latLngToVec3(TARGET.lat, TARGET.lon, 2.05);
+    return origins.map((t) => {
+      const srcPos = latLngToVec3(t.lat, t.lon, 2.05);
       const mid = srcPos.clone().add(targetPos).multiplyScalar(0.5);
-      mid.normalize().multiplyScalar(3.5 + t.count / 200);
+      mid.normalize().multiplyScalar(3.5 + Math.min(t.count, 400) / 200);
 
       const curve = new THREE.QuadraticBezierCurve3(srcPos, mid, targetPos);
       const points = curve.getPoints(40);
-      const color = t.severity === "critical" ? "#ff2d55" : t.severity === "high" ? "#ff6b35" : "#00ffd5";
+      const sev = severityFromCount(t.count);
+      const color = sev === "critical" ? "#ff2d55" : sev === "high" ? "#ff6b35" : "#00ffd5";
       return { points, color };
     });
-  }, []);
+  }, [origins]);
 
   return (
     <group ref={groupRef}>
@@ -122,9 +113,9 @@ function AttackArcs() {
 
 function TargetPoint() {
   const ref = useRef<THREE.Group>(null);
-  const pos = latLngToVec3(TARGET.lat, TARGET.lng, 2.05);
+  const pos = latLngToVec3(TARGET.lat, TARGET.lon, 2.05);
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.y += delta * 0.05;
   });
 
@@ -139,7 +130,7 @@ function TargetPoint() {
   );
 }
 
-export default function ThreatGlobe() {
+export default function ThreatGlobe({ origins }: ThreatGlobeProps) {
   return (
     <div className="w-full h-full relative">
       <Canvas
@@ -149,8 +140,8 @@ export default function ThreatGlobe() {
         <ambientLight intensity={0.1} />
         <Stars radius={50} depth={50} count={1500} factor={3} fade speed={1} />
         <GlobeWireframe />
-        <ThreatPoints />
-        <AttackArcs />
+        <ThreatPoints origins={origins} />
+        <AttackArcs origins={origins} />
         <TargetPoint />
         <OrbitControls
           enableZoom={true}

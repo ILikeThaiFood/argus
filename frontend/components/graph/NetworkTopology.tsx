@@ -2,67 +2,43 @@
 
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
+import type { NetworkTopology as NetworkTopologyType, NetworkEntity, NetworkEdge } from "@/lib/types";
 
-interface Node {
-  id: string;
-  type: "ip" | "host" | "user" | "service";
-  name: string;
-  risk_score: number;
-  x?: number;
-  y?: number;
+interface NetworkTopologyProps {
+  topology: NetworkTopologyType | null;
 }
 
-interface Link {
-  source: string | Node;
-  target: string | Node;
+// Fallback mock data used when backend is unavailable
+const FALLBACK_NODES: NetworkEntity[] = [
+  { id: "fw-01", type: "service", name: "Firewall", properties: {}, risk_score: 15 },
+  { id: "ids-01", type: "service", name: "IDS-Sensor", properties: {}, risk_score: 10 },
+  { id: "web-01", type: "host", name: "Web-01", properties: {}, risk_score: 45 },
+  { id: "db-01", type: "host", name: "DB-Primary", properties: {}, risk_score: 55 },
+  { id: "dc-01", type: "host", name: "Domain-Controller", properties: {}, risk_score: 70 },
+  { id: "attacker-1", type: "ip", name: "223.71.x.x", properties: {}, risk_score: 95 },
+];
+
+const FALLBACK_EDGES: NetworkEdge[] = [
+  { source: "attacker-1", target: "fw-01", label: "scan", weight: 3 },
+  { source: "fw-01", target: "ids-01", label: "mirror", weight: 1 },
+  { source: "fw-01", target: "web-01", label: "HTTPS", weight: 2 },
+  { source: "web-01", target: "db-01", label: "SQL", weight: 2.5 },
+  { source: "dc-01", target: "web-01", label: "lateral SMB", weight: 4 },
+];
+
+interface D3Node extends NetworkEntity {
+  x?: number;
+  y?: number;
+  fx?: number | null;
+  fy?: number | null;
+}
+
+interface D3Link {
+  source: string | D3Node;
+  target: string | D3Node;
   label: string;
   weight: number;
 }
-
-const MOCK_NODES: Node[] = [
-  { id: "fw-01", type: "service", name: "Firewall", risk_score: 15 },
-  { id: "ids-01", type: "service", name: "IDS-Sensor", risk_score: 10 },
-  { id: "web-01", type: "host", name: "Web-01", risk_score: 45 },
-  { id: "web-02", type: "host", name: "Web-02", risk_score: 30 },
-  { id: "db-01", type: "host", name: "DB-Primary", risk_score: 55 },
-  { id: "app-01", type: "host", name: "App-01", risk_score: 40 },
-  { id: "dc-01", type: "host", name: "Domain-Controller", risk_score: 70 },
-  { id: "vpn-01", type: "service", name: "VPN-Gateway", risk_score: 20 },
-  { id: "mail-01", type: "host", name: "Mail-Server", risk_score: 50 },
-  { id: "admin", type: "user", name: "admin@corp", risk_score: 65 },
-  { id: "analyst", type: "user", name: "analyst@corp", risk_score: 20 },
-  { id: "attacker-1", type: "ip", name: "223.71.x.x", risk_score: 95 },
-  { id: "attacker-2", type: "ip", name: "5.188.x.x", risk_score: 90 },
-  { id: "dns-01", type: "service", name: "DNS-Server", risk_score: 30 },
-  { id: "siem-01", type: "service", name: "SIEM", risk_score: 10 },
-];
-
-const MOCK_LINKS: Link[] = [
-  { source: "attacker-1", target: "fw-01", label: "scan", weight: 3 },
-  { source: "attacker-2", target: "vpn-01", label: "brute force", weight: 4 },
-  { source: "fw-01", target: "ids-01", label: "mirror", weight: 1 },
-  { source: "fw-01", target: "web-01", label: "HTTPS", weight: 2 },
-  { source: "fw-01", target: "web-02", label: "HTTPS", weight: 1.5 },
-  { source: "fw-01", target: "mail-01", label: "SMTP", weight: 1 },
-  { source: "web-01", target: "app-01", label: "API", weight: 2 },
-  { source: "app-01", target: "db-01", label: "SQL", weight: 2.5 },
-  { source: "vpn-01", target: "dc-01", label: "LDAP", weight: 2 },
-  { source: "admin", target: "dc-01", label: "RDP", weight: 3 },
-  { source: "analyst", target: "siem-01", label: "dashboard", weight: 1 },
-  { source: "dc-01", target: "app-01", label: "lateral SMB", weight: 4 },
-  { source: "ids-01", target: "siem-01", label: "alerts", weight: 1 },
-  { source: "web-01", target: "dns-01", label: "DNS", weight: 1 },
-];
-
-const typeShape = (type: string): string => {
-  switch (type) {
-    case "ip": return "circle";
-    case "host": return "rect";
-    case "user": return "triangle";
-    case "service": return "diamond";
-    default: return "circle";
-  }
-};
 
 const riskColor = (score: number): string => {
   if (score >= 80) return "#ff2d55";
@@ -72,8 +48,11 @@ const riskColor = (score: number): string => {
   return "#0088ff";
 };
 
-export default function NetworkTopology() {
+export default function NetworkTopology({ topology }: NetworkTopologyProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+
+  const nodes = topology?.nodes ?? FALLBACK_NODES;
+  const edges = topology?.edges ?? FALLBACK_EDGES;
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -89,36 +68,33 @@ export default function NetworkTopology() {
 
     const g = svg.append("g");
 
-    // Zoom
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.3, 4])
       .on("zoom", (event) => g.attr("transform", event.transform));
     svg.call(zoom);
 
-    const nodes: Node[] = MOCK_NODES.map((d) => ({ ...d }));
-    const links: Link[] = MOCK_LINKS.map((d) => ({ ...d }));
+    const d3Nodes: D3Node[] = nodes.map((d) => ({ ...d }));
+    const d3Links: D3Link[] = edges.map((d) => ({ ...d }));
 
-    const simulation = d3.forceSimulation(nodes as any)
-      .force("link", d3.forceLink(links as any).id((d: any) => d.id).distance(80))
+    const simulation = d3.forceSimulation(d3Nodes as any)
+      .force("link", d3.forceLink(d3Links as any).id((d: any) => d.id).distance(80))
       .force("charge", d3.forceManyBody().strength(-200))
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force("collision", d3.forceCollide().radius(25));
 
-    // Links
     const link = g.append("g")
       .selectAll("line")
-      .data(links)
+      .data(d3Links)
       .join("line")
       .attr("stroke", (d) => (d.weight >= 3 ? "#ff2d55" : "#1a1f2e"))
       .attr("stroke-width", (d) => Math.max(1, d.weight * 0.8))
       .attr("stroke-opacity", (d) => (d.weight >= 3 ? 0.6 : 0.3));
 
-    // Nodes
     const node = g.append("g")
       .selectAll("g")
-      .data(nodes)
+      .data(d3Nodes)
       .join("g")
-      .call(d3.drag<SVGGElement, Node>()
+      .call(d3.drag<any, D3Node>()
         .on("start", (event, d: any) => {
           if (!event.active) simulation.alphaTarget(0.3).restart();
           d.fx = d.x; d.fy = d.y;
@@ -130,7 +106,6 @@ export default function NetworkTopology() {
         })
       );
 
-    // Draw shapes based on type
     node.each(function (d) {
       const el = d3.select(this);
       const color = riskColor(d.risk_score);
@@ -154,7 +129,6 @@ export default function NetworkTopology() {
           .attr("fill", color).attr("opacity", 0.8);
       }
 
-      // Label
       el.append("text")
         .text(d.name)
         .attr("dy", size + 12)
@@ -163,7 +137,6 @@ export default function NetworkTopology() {
         .attr("font-size", "8px")
         .attr("font-family", "JetBrains Mono, monospace");
 
-      // Glow for high-risk nodes
       if (d.risk_score >= 70) {
         el.append("circle")
           .attr("r", size + 4)
@@ -184,7 +157,7 @@ export default function NetworkTopology() {
     });
 
     return () => { simulation.stop(); };
-  }, []);
+  }, [nodes, edges]);
 
   return (
     <div className="w-full h-full">
