@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Shield, Activity, Database, Brain, Rss, AlertTriangle } from "lucide-react";
+import type { DashboardStats } from "@/lib/types";
+import type { ConnectionState } from "@/lib/websocket";
 
 const SYSTEMS = [
   { name: "API", icon: Activity },
@@ -18,10 +20,22 @@ const DEFCON_LEVELS = [
   { level: 1, label: "CRITICAL", color: "text-cyber-red" },
 ];
 
-export default function Header() {
+interface HeaderProps {
+  stats: DashboardStats | null;
+  connectionState: ConnectionState;
+}
+
+function computeDefcon(stats: DashboardStats | null): number {
+  if (!stats) return 5;
+  if (stats.critical_count >= 10) return 1;
+  if (stats.critical_count >= 5) return 2;
+  if (stats.high_count >= 10) return 3;
+  if (stats.active_alerts >= 20) return 4;
+  return 5;
+}
+
+export default function Header({ stats, connectionState }: HeaderProps) {
   const [clock, setClock] = useState("");
-  const [eventCount, setEventCount] = useState(14832);
-  const [defcon] = useState(3);
 
   useEffect(() => {
     const tick = () => {
@@ -42,15 +56,9 @@ export default function Header() {
     return () => clearInterval(interval);
   }, []);
 
-  // Simulate increasing event count
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setEventCount((c) => c + Math.floor(Math.random() * 5) + 1);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
+  const defcon = computeDefcon(stats);
   const defconInfo = DEFCON_LEVELS.find((d) => d.level === defcon)!;
+  const isConnected = connectionState === "connected";
 
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-navy-800/80 border-b border-navy-600/50 backdrop-blur-sm">
@@ -80,7 +88,7 @@ export default function Header() {
             className="flex items-center gap-1.5 text-[10px] text-slate-400"
           >
             <div className="relative">
-              <div className="w-2 h-2 rounded-full bg-cyber-green status-pulse" />
+              <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-cyber-green status-pulse" : "bg-slate-600"}`} />
             </div>
             <sys.icon className="w-3 h-3" />
             <span className="hidden lg:inline">{sys.name}</span>
@@ -111,7 +119,7 @@ export default function Header() {
         </div>
         <div className="text-right border-l border-navy-600/50 pl-4">
           <div className="text-sm font-bold text-cyber-green tabular-nums count-animate">
-            {eventCount.toLocaleString()}
+            {(stats?.total_events ?? 0).toLocaleString()}
           </div>
           <div className="text-[9px] text-slate-500 uppercase tracking-wider">
             Events Processed

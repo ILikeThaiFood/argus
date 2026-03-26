@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Activity, AlertTriangle, ShieldAlert, ShieldCheck, Zap, TrendingUp } from "lucide-react";
+import { Activity, AlertTriangle, ShieldAlert, ShieldCheck, Zap } from "lucide-react";
+import type { DashboardStats } from "@/lib/types";
 
 interface StatCard {
   label: string;
@@ -11,37 +11,30 @@ interface StatCard {
   glowClass: string;
 }
 
-export default function StatsCards() {
-  const [stats, setStats] = useState({
-    total_events: 14832,
-    active_alerts: 47,
-    critical_count: 8,
-    high_count: 15,
-    medium_count: 24,
-    events_per_second: 12.4,
-  });
+interface StatsCardsProps {
+  stats: DashboardStats | null;
+}
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStats((prev) => ({
-        total_events: prev.total_events + Math.floor(Math.random() * 8) + 1,
-        active_alerts: prev.active_alerts + (Math.random() > 0.7 ? 1 : 0),
-        critical_count: prev.critical_count + (Math.random() > 0.9 ? 1 : 0),
-        high_count: prev.high_count + (Math.random() > 0.85 ? 1 : 0),
-        medium_count: prev.medium_count + (Math.random() > 0.8 ? 1 : 0),
-        events_per_second: Math.round((8 + Math.random() * 10) * 10) / 10,
-      }));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+export default function StatsCards({ stats }: StatsCardsProps) {
+  const s = stats ?? {
+    total_events: 0,
+    active_alerts: 0,
+    critical_count: 0,
+    high_count: 0,
+    medium_count: 0,
+    low_count: 0,
+    events_per_second: 0,
+    top_attack_types: [],
+    threat_origins: [],
+  };
 
   const cards: StatCard[] = [
-    { label: "Total Events", value: stats.total_events, icon: Activity, color: "text-cyber-cyan", glowClass: "text-glow" },
-    { label: "Active Alerts", value: stats.active_alerts, icon: AlertTriangle, color: "text-cyber-amber", glowClass: "text-glow-amber" },
-    { label: "Critical", value: stats.critical_count, icon: ShieldAlert, color: "text-cyber-red", glowClass: "text-glow-red" },
-    { label: "High", value: stats.high_count, icon: ShieldAlert, color: "text-cyber-amber", glowClass: "text-glow-amber" },
-    { label: "Medium", value: stats.medium_count, icon: ShieldCheck, color: "text-yellow-400", glowClass: "" },
-    { label: "Events/sec", value: stats.events_per_second, icon: Zap, color: "text-cyber-green", glowClass: "" },
+    { label: "Total Events", value: s.total_events, icon: Activity, color: "text-cyber-cyan", glowClass: "text-glow" },
+    { label: "Active Alerts", value: s.active_alerts, icon: AlertTriangle, color: "text-cyber-amber", glowClass: "text-glow-amber" },
+    { label: "Critical", value: s.critical_count, icon: ShieldAlert, color: "text-cyber-red", glowClass: "text-glow-red" },
+    { label: "High", value: s.high_count, icon: ShieldAlert, color: "text-cyber-amber", glowClass: "text-glow-amber" },
+    { label: "Medium", value: s.medium_count, icon: ShieldCheck, color: "text-yellow-400", glowClass: "" },
+    { label: "Events/sec", value: s.events_per_second, icon: Zap, color: "text-cyber-green", glowClass: "" },
   ];
 
   return (
