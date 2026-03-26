@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OCSF Network Activity Event",
+  "description": "OCSF v1.1 Network Activity event schema (class_uid: 4001) for ARGUS platform",
+  "type": "object",
+  "required": ["time", "severity_id", "type_uid", "category_uid", "class_uid", "activity_id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event timestamp in ISO 8601 format"
+    },
+    "severity_id": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Severity: 0=Unknown, 1=Informational, 2=Low, 3=Medium, 4=High, 5=Critical/Fatal"
+    },
+    "type_uid": {
+      "type": "integer",
+      "description": "Event type unique identifier (class_uid * 100 + activity_id)"
+    },
+    "category_uid": {
+      "type": "integer",
+      "description": "Event category: 1=System, 2=Findings, 3=Identity, 4=Network, 5=Discovery, 6=Application"
+    },
+    "class_uid": {
+      "type": "integer",
+      "description": "Event class: 4001=Network Activity, 4002=HTTP Activity, 4003=DNS Activity, 4004=DHCP Activity"
+    },
+    "activity_id": {
+      "type": "integer",
+      "description": "Activity type within the class"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["new", "in_progress", "resolved", "closed"],
+      "default": "new"
+    },
+    "src_ip": {
+      "type": "string",
+      "description": "Source IP address"
+    },
+    "dst_ip": {
+      "type": "string",
+      "description": "Destination IP address"
+    },
+    "src_port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "dst_port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "protocol": {
+      "type": "string",
+      "enum": ["TCP", "UDP", "ICMP", "OTHER"],
+      "default": "TCP"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional event metadata",
+      "properties": {
+        "product": {"type": "string"},
+        "version": {"type": "string"},
+        "attack_type": {"type": "string"},
+        "origin_country": {"type": "string"},
+        "origin_lat": {"type": "number"},
+        "origin_lon": {"type": "number"},
+        "mitre_technique": {"type": "string"},
+        "mitre_tactic": {"type": "string"},
+        "kill_chain_phase": {"type": "string"},
+        "is_attack": {"type": "boolean"}
+      }
+    },
+    "observables": {
+      "type": "array",
+      "description": "Observable artifacts for IOC correlation",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["ip", "domain", "hash", "url", "email", "port", "hostname"]
+          },
+          "value": {"type": "string"},
+          "reputation": {"type": "string"}
+        },
+        "required": ["type", "value"]
+      }
+    }
+  }
+}

@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --navy-900: #0a0e1a;
+  --navy-800: #111827;
+  --navy-700: #1a1f2e;
+  --navy-600: #242b3d;
+  --cyber-cyan: #00ffd5;
+  --cyber-blue: #0088ff;
+  --cyber-amber: #ff6b35;
+  --cyber-red: #ff2d55;
+  --cyber-green: #00ff88;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--navy-900);
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--navy-900);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--navy-600);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cyber-cyan);
+}
+
+/* Panel Glow Effect */
+.panel-glow {
+  position: relative;
+  border: 1px solid rgba(0, 255, 213, 0.1);
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(10, 14, 26, 0.98));
+  box-shadow:
+    0 0 15px rgba(0, 255, 213, 0.05),
+    inset 0 0 15px rgba(0, 255, 213, 0.02);
+  transition: all 0.3s ease;
+}
+
+.panel-glow:hover {
+  border-color: rgba(0, 255, 213, 0.25);
+  box-shadow:
+    0 0 25px rgba(0, 255, 213, 0.1),
+    inset 0 0 25px rgba(0, 255, 213, 0.03);
+}
+
+/* Text Glow */
+.text-glow {
+  text-shadow: 0 0 10px rgba(0, 255, 213, 0.5), 0 0 40px rgba(0, 255, 213, 0.2);
+}
+
+.text-glow-red {
+  text-shadow: 0 0 10px rgba(255, 45, 85, 0.5), 0 0 40px rgba(255, 45, 85, 0.2);
+}
+
+.text-glow-amber {
+  text-shadow: 0 0 10px rgba(255, 107, 53, 0.5), 0 0 40px rgba(255, 107, 53, 0.2);
+}
+
+.text-glow-blue {
+  text-shadow: 0 0 10px rgba(0, 136, 255, 0.5), 0 0 40px rgba(0, 136, 255, 0.2);
+}
+
+/* HUD Corner Brackets */
+.hud-bracket {
+  position: relative;
+}
+
+.hud-bracket::before,
+.hud-bracket::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--cyber-cyan);
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.hud-bracket::before {
+  top: 0;
+  left: 0;
+  border-top: 2px solid;
+  border-left: 2px solid;
+}
+
+.hud-bracket::after {
+  bottom: 0;
+  right: 0;
+  border-bottom: 2px solid;
+  border-right: 2px solid;
+}
+
+.hud-bracket:hover::before,
+.hud-bracket:hover::after {
+  opacity: 1;
+}
+
+.hud-bracket-all {
+  position: relative;
+}
+
+.hud-bracket-all::before,
+.hud-bracket-all::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--cyber-cyan);
+  opacity: 0.5;
+}
+
+.hud-bracket-all::before {
+  top: 0;
+  left: 0;
+  border-top: 2px solid;
+  border-left: 2px solid;
+}
+
+.hud-bracket-all::after {
+  top: 0;
+  right: 0;
+  border-top: 2px solid;
+  border-right: 2px solid;
+}
+
+/* Pulse Status Indicator */
+.status-pulse {
+  position: relative;
+}
+
+.status-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(0, 255, 136, 0);
+  }
+}
+
+/* Scan Line */
+.scan-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyber-cyan), transparent);
+  opacity: 0.3;
+  animation: scan 4s linear infinite;
+}
+
+@keyframes scan {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+
+/* Grid Background Pattern */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(0, 255, 213, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 213, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Animated border gradient */
+@keyframes borderGlow {
+  0%, 100% { border-color: rgba(0, 255, 213, 0.2); }
+  50% { border-color: rgba(0, 255, 213, 0.5); }
+}
+
+.border-glow {
+  animation: borderGlow 3s ease-in-out infinite;
+}
+
+/* Number counter animation */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.count-animate {
+  animation: countUp 0.3s ease-out;
+}
